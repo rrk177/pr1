@@ -1,0 +1,6 @@
+NAMES             IMAGE                                    STATUS                       PORTS
+superset          lakehouse-superset:4.1.2                 Up 2 minutes (healthy)       0.0.0.0:8088->8088/tcp, [::]:8088->8088/tcp
+trino             trinodb/trino:476                        Up About an hour (healthy)   0.0.0.0:8080->8080/tcp, [::]:8080->8080/tcp
+lakekeeper        quay.io/lakekeeper/catalog:latest-main   Up About an hour             0.0.0.0:8181->8181/tcp, [::]:8181->8181/tcp
+lakehouse-pg      postgres:17                              Up About an hour             0.0.0.0:5433->5432/tcp, [::]:5433->5432/tcp
+lakehouse-minio   pgsty/silo:latest                        Up About an hour             0.0.0.0:9000-9001->9000-9001/tcp, [::]:9000-9001->9000-9001/tcp

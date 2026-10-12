@@ -1,0 +1,124 @@
+===== sql/01_bronze.sql
+[session] lakekeeper.compression_codec = ZSTD
+[   0.04s] CREATE SCHEMA IF NOT EXISTS lakekeeper.bronze
+[   0.02s] DROP TABLE IF EXISTS lakekeeper.bronze.nation
+[   0.26s] CREATE TABLE lakekeeper.bronze.nation WITH (format = 'PARQUET') AS
+[   0.01s] DROP TABLE IF EXISTS lakekeeper.bronze.region
+[   0.21s] CREATE TABLE lakekeeper.bronze.region WITH (format = 'PARQUET') AS
+[   0.03s] DROP TABLE IF EXISTS lakekeeper.bronze.customer
+[   3.24s] CREATE TABLE lakekeeper.bronze.customer WITH (format = 'PARQUET') AS
+[   0.01s] DROP TABLE IF EXISTS lakekeeper.bronze.orders
+[   8.88s] CREATE TABLE lakekeeper.bronze.orders WITH (format = 'PARQUET') AS
+[   0.01s] DROP TABLE IF EXISTS lakekeeper.bronze.lineitem
+[  84.02s] CREATE TABLE lakekeeper.bronze.lineitem WITH (format = 'PARQUET') AS
+[   9.66s] SELECT 'customer' AS tbl, (SELECT count(*) FROM lakekeeper.bronze.customer) AS bronze_rows
+tbl      | bronze_rows | source_rows
+---------+-------------+------------
+nation   | 25          | 25         
+region   | 5           | 5          
+customer | 1500000     | 1500000    
+orders   | 15000000    | 15000000   
+lineitem | 59986052    | 59986052   
+===== sql/02_silver.sql
+[session] lakekeeper.compression_codec = ZSTD
+[   0.05s] CREATE SCHEMA IF NOT EXISTS lakekeeper.silver
+[   0.01s] DROP TABLE IF EXISTS lakekeeper.silver.customer
+[   5.24s] CREATE TABLE lakekeeper.silver.customer WITH (format = 'PARQUET') AS
+[   0.01s] DROP TABLE IF EXISTS lakekeeper.silver.order_lines
+Traceback (most recent call last):
+  File "/Users/cfa/Desktop/education/основы информаци/lakehouse-q10/scripts/trino.py", line 88, in <module>
+    run_file(sys.argv[2])
+    ~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/cfa/Desktop/education/основы информаци/lakehouse-q10/scripts/trino.py", line 70, in run_file
+    cols, rows, st = query(stmt, session)
+                     ~~~~~^^^^^^^^^^^^^^^
+  File "/Users/cfa/Desktop/education/основы информаци/lakehouse-q10/scripts/trino.py", line 39, in query
+    raise RuntimeError(f"{err.get('errorName')}: {err.get('message')}\nSQL: {sql[:300]}")
+RuntimeError: EXCEEDED_LOCAL_MEMORY_LIMIT: Query exceeded per-node memory limit of 1.87GB [Allocated: 1.86GB, Delta: 2.41MB, Top Consumers: {HashBuilderOperator=940.13MB, ScanFilterAndProjectOperator=779.13MB, TableWriterOperator=78.81MB}]
+SQL: CREATE TABLE lakekeeper.silver.order_lines
+WITH (format = 'PARQUET', partitioning = ARRAY['month(orderdate)']) AS
+SELECT
+    l.orderkey,
+    l.linenumber,
+    o.custkey,
+    o.orderdate,
+    upper(trim(o.orderstatus))                                   AS orderstatus,
+    trim(o.orderpriority)       
+===== sql/02_silver.sql
+[session] lakekeeper.compression_codec = ZSTD
+[   0.04s] CREATE SCHEMA IF NOT EXISTS lakekeeper.silver
+[   0.05s] DROP TABLE IF EXISTS lakekeeper.silver.customer
+[   6.34s] CREATE TABLE lakekeeper.silver.customer WITH (format = 'PARQUET') AS
+[   0.01s] DROP TABLE IF EXISTS lakekeeper.silver.order_lines
+[   0.16s] CREATE TABLE lakekeeper.silver.order_lines
+[  53.15s] INSERT INTO lakekeeper.silver.order_lines
+[  28.32s] INSERT INTO lakekeeper.silver.order_lines
+[  41.60s] INSERT INTO lakekeeper.silver.order_lines
+[  46.60s] INSERT INTO lakekeeper.silver.order_lines
+[  47.52s] INSERT INTO lakekeeper.silver.order_lines
+[  47.61s] INSERT INTO lakekeeper.silver.order_lines
+[  13.61s] INSERT INTO lakekeeper.silver.order_lines
+[   0.22s] SELECT 'customer' AS tbl,
+tbl         | bronze_rows | silver_rows
+------------+-------------+------------
+customer    | 1500000     | 1500000    
+order_lines | 59986052    | 59986052   
+===== sql/03_gold.sql
+[session] lakekeeper.compression_codec = ZSTD
+[   0.04s] CREATE SCHEMA IF NOT EXISTS lakekeeper.gold
+[   0.01s] DROP TABLE IF EXISTS lakekeeper.gold.q10_returned_items_top20
+[   2.16s] CREATE TABLE lakekeeper.gold.q10_returned_items_top20 WITH (format = 'PARQUET') AS
+[   0.01s] DROP TABLE IF EXISTS lakekeeper.gold.returns_by_nation_quarter
+[   9.50s] CREATE TABLE lakekeeper.gold.returns_by_nation_quarter WITH (format = 'PARQUET') AS
+[   0.04s] SELECT * FROM lakekeeper.gold.q10_returned_items_top20 ORDER BY rank
+rank | period  | custkey | name               | revenue     | acctbal | nation        | address                               | phone           | comment                                                                                                            
+-----+---------+---------+--------------------+-------------+---------+---------------+---------------------------------------+-----------------+--------------------------------------------------------------------------------------------------------------------
+1    | 1993-Q4 | 1237537 | Customer#001237537 | 884989.6657 | 7840.17 | RUSSIA        | FNG6WgB1mopyyY,ajQTU qUPW5o           | 32-367-120-4327 | nag carefully about the regular packages. carefully reg                                                            
+2    | 1993-Q4 | 1116802 | Customer#001116802 | 830214.1117 | 772.17  | JORDAN        | JpGQT3IHoogqB3ZMrSrzhBrVFObr          | 23-199-655-3770 | ests. quickly ironic deposits along the special requests a                                                         
+3    | 1993-Q4 | 508954  | Customer#000508954 | 826167.5138 | 3072.07 | ETHIOPIA      | zgafElAXecB3I7Ee1a9B                  | 15-880-510-9487 | ickly regular deposits. carefully regular instructions engage deposits. foxes are caref                            
+4    | 1993-Q4 | 1487503 | Customer#001487503 | 825996.5903 | 5398.11 | IRAN          | orychjo, O6c                          | 20-271-234-4401 | ccounts sleep carefully. furiously pending packages boost slyly after the quickly regular requests. pinto beans fro
+5    | 1993-Q4 | 1461247 | Customer#001461247 | 775992.0820 | 3205.93 | SAUDI ARABIA  | jQZKjwNqttmC0BohJoGA4U                | 30-137-949-5375 | atterns sleep blithely. fluffily pending accounts sleep furiously from the ironic deposits! blithely even i        
+6    | 1993-Q4 | 1316338 | Customer#001316338 | 765063.7003 | 8682.95 | INDIA         | bfz3FH  qaULsV7oiCn66z6ezkZBpcl       | 18-793-610-3832 | equests. regular, even excuses doze slyly against the blithely even accounts. slyly regular dinos                  
+7    | 1993-Q4 | 817849  | Customer#000817849 | 737664.7232 | -380.30 | MOROCCO       | 7gz7HbNoVNSbv23trx                    | 25-111-847-3201 | fully special accounts wake slyly among the sheaves. permanently brave requests use furiously amon                 
+8    | 1993-Q4 | 1335394 | Customer#001335394 | 731259.8675 | 3978.53 | VIETNAM       | mdNmISybrVNaIPSp                      | 31-760-271-2302 | slyly even instructions. carefully silent ideas                                                                    
+9    | 1993-Q4 | 102358  | Customer#000102358 | 715001.8825 | 3564.90 | BRAZIL        | YpDpv0sP14F5xMUQbkDV,XGcMJypFV6jH     | 12-941-212-8350 | y slyly regular multipliers. furiously regular deposits nag final excuses. slyly special accounts haggle re        
+10   | 1993-Q4 | 1432624 | Customer#001432624 | 713512.6431 | 205.08  | FRANCE        | NTCV7qvJ0PgcULFci,VdAB,0ZbSEZRdnnz,   | 16-550-232-2774 | ctions use regular requests. quickly bold somas cajole at the c                                                    
+11   | 1993-Q4 | 160528  | Customer#000160528 | 710673.3317 | 3425.52 | INDONESIA     | 6 2h0BtgTVFrbGbg7a7ThCOLvfvb2a8FOm2qs | 19-670-600-6340 | sly regular theodolites. bold, regular foxes cajole.                                                               
+12   | 1993-Q4 | 1345237 | Customer#001345237 | 707735.5745 | 6905.22 | FRANCE        | bhu14nxGOuDn2FldK6kidxkQt             | 16-133-279-4001 | s according to the express, unusual acc                                                                            
+13   | 1993-Q4 | 839816  | Customer#000839816 | 705643.2854 | 2110.25 | UNITED STATES | AROroot0eKdCxq                        | 34-453-282-7925 | unusual requests haggle slyly alongside of the slyly unusual ideas. f                                              
+14   | 1993-Q4 | 1136716 | Customer#001136716 | 695043.5606 | 5886.01 | CHINA         | uAIqfk27UKRIIBZLUvKDfUOyh             | 28-729-762-5783 | e foxes. bold orbits impress slyly about the regular, regular theodolites; carefully exp                           
+15   | 1993-Q4 | 1439413 | Customer#001439413 | 690161.9783 | 8808.65 | ETHIOPIA      | WweMOTcCq4A8yHDL                      | 15-432-961-8772 | quick foxes are. fluffily regular deposits wake besides the sl                                                     
+16   | 1993-Q4 | 1392475 | Customer#001392475 | 685464.4086 | 593.26  | SAUDI ARABIA  | PHuNdZucsuZvpiKqcsBVPY0R jeHSBZL      | 30-640-220-2095 | boldly-- slyly careful requests sleep after the slyly regular depo                                                 
+17   | 1993-Q4 | 616909  | Customer#000616909 | 684978.1044 | 2660.84 | EGYPT         | iKRlIpRSp65EFpPY47d                   | 14-185-768-2185 | uests. theodolites haggle abov                                                                                     
+18   | 1993-Q4 | 314272  | Customer#000314272 | 682212.6365 | 5127.92 | UNITED STATES | sfg9XaV58yPqF7Wo0Akpif42GFh6          | 34-674-752-5199 | fix carefully deposits. even packages haggle. fluffily unusual platelets h                                         
+19   | 1993-Q4 | 1472980 | Customer#001472980 | 677765.9180 | 6003.36 | IRAQ          | iie M4kwzvAwMV Hpvv                   | 21-506-776-4657 | s use slyly thinly final deposits. ironic pinto beans poach furiously bl                                           
+20   | 1993-Q4 | 1486201 | Customer#001486201 | 674878.4539 | -276.92 | JORDAN        | TJhgKueFwrrtXLtenhlw sC2N             | 23-611-797-4750 | ag. deposits along the blithely express instructions w                                                             
+===== sql/04_validate.sql
+Traceback (most recent call last):
+  File "/Users/cfa/Desktop/education/основы информаци/lakehouse-q10/scripts/trino.py", line 88, in <module>
+    run_file(sys.argv[2])
+    ~~~~~~~~^^^^^^^^^^^^^
+  File "/Users/cfa/Desktop/education/основы информаци/lakehouse-q10/scripts/trino.py", line 70, in run_file
+    cols, rows, st = query(stmt, session)
+                     ~~~~~^^^^^^^^^^^^^^^
+  File "/Users/cfa/Desktop/education/основы информаци/lakehouse-q10/scripts/trino.py", line 39, in query
+    raise RuntimeError(f"{err.get('errorName')}: {err.get('message')}\nSQL: {sql[:300]}")
+RuntimeError: EXCEEDED_LOCAL_MEMORY_LIMIT: Query exceeded per-node memory limit of 1.87GB [Allocated: 1.87GB, Delta: 96.91kB, Top Consumers: {HashAggregationOperator=1.70GB, ScanFilterAndProjectOperator=119.38MB, LazyOutputBuffer=30.51MB}]
+SQL: SELECT count(*)                                         AS rows_total,
+       count(DISTINCT (orderkey, linenumber))           AS distinct_keys,
+       count(*) - count(DISTINCT (orderkey, linenumber)) AS duplicates,
+       count_if(custkey IS NULL OR orderdate IS NULL)   AS null_keys
+FROM lakekeepe
+===== sql/04_validate.sql
+[   5.29s] SELECT sum(lines)                    AS rows_total,
+rows_total | duplicates | null_keys
+-----------+------------+----------
+59986052   | 0          | 0        
+[   2.81s] SELECT count(*) AS orphan_lines
+orphan_lines
+------------
+0           
+[  12.59s] WITH ref AS (
+compared_rows | same_customer_at_rank | max_revenue_diff      
+--------------+-----------------------+-----------------------
+20            | 20                    | 2.3283064365386963e-10

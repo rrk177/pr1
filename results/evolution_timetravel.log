@@ -1,0 +1,148 @@
+
+### 1. Снапшоты до изменений
+```sql
+SELECT snapshot_id, committed_at, operation FROM lakekeeper.silver."customer$snapshots" ORDER BY committed_at
+```
+| snapshot_id | committed_at | operation |
+|---|---|---|
+| 2896680048948188630 | 2026-10-12 09:16:32.238 UTC | append |
+
+### Исходное состояние
+```sql
+SELECT count(*) AS rows, count(DISTINCT nation_name) AS nations FROM lakekeeper.silver.customer
+```
+| rows | nations |
+|---|---|
+| 1500000 | 25 |
+
+### 2a. Schema evolution: добавляем колонку
+```sql
+ALTER TABLE lakekeeper.silver.customer ADD COLUMN customer_tier varchar
+```
+
+### Старые строки не переписывались — новая колонка у них NULL
+```sql
+SELECT custkey, name, acctbal, customer_tier FROM lakekeeper.silver.customer ORDER BY custkey LIMIT 3
+```
+| custkey | name | acctbal | customer_tier |
+|---|---|---|---|
+| 1 | Customer#000000001 | 711.56 | None |
+| 2 | Customer#000000002 | 121.65 | None |
+| 3 | Customer#000000003 | 7498.12 | None |
+
+### 2b. Заполняем новую колонку (обогащение)
+```sql
+UPDATE lakekeeper.silver.customer SET customer_tier = CASE
+            WHEN acctbal >= 5000 THEN 'GOLD'
+            WHEN acctbal >= 0    THEN 'STANDARD'
+            ELSE 'DEBTOR' END
+```
+-- затронуто строк: 1500000
+```sql
+SELECT customer_tier, count(*) AS customers FROM lakekeeper.silver.customer GROUP BY customer_tier ORDER BY 1
+```
+| customer_tier | customers |
+|---|---|
+| DEBTOR | 136384 |
+| GOLD | 681126 |
+| STANDARD | 682490 |
+
+### 2c. Schema evolution: переименовываем колонку
+```sql
+ALTER TABLE lakekeeper.silver.customer RENAME COLUMN phone TO phone_number
+```
+```sql
+SELECT custkey, phone_number, customer_tier FROM lakekeeper.silver.customer ORDER BY custkey LIMIT 3
+```
+| custkey | phone_number | customer_tier |
+|---|---|---|
+| 1 | 25-989-741-2988 | STANDARD |
+| 2 | 23-768-687-3665 | STANDARD |
+| 3 | 11-719-748-3364 | GOLD |
+
+### Снапшот ДО эволюции схемы по-прежнему читается
+```sql
+SELECT custkey, name, acctbal FROM lakekeeper.silver.customer FOR VERSION AS OF 2896680048948188630 ORDER BY custkey LIMIT 3
+```
+| custkey | name | acctbal |
+|---|---|---|
+| 1 | Customer#000000001 | 711.56 |
+| 2 | Customer#000000002 | 121.65 |
+| 3 | Customer#000000003 | 7498.12 |
+
+### Снапшоты после эволюции
+```sql
+SELECT snapshot_id, committed_at, operation, element_at(summary, 'added-records') AS added, element_at(summary, 'deleted-records') AS deleted FROM lakekeeper.silver."customer$snapshots" ORDER BY committed_at
+```
+| snapshot_id | committed_at | operation | added | deleted |
+|---|---|---|---|---|
+| 2896680048948188630 | 2026-10-12 09:16:32.238 UTC | append | 1500000 | None |
+| 1472664706081604478 | 2026-10-12 09:16:36.199 UTC | overwrite | 1500000 | None |
+
+### 3. «Авария»: случайно удалили клиентов из RUSSIA
+```sql
+DELETE FROM lakekeeper.silver.customer WHERE nation_name = 'RUSSIA'
+```
+-- затронуто строк: 60065
+
+### Текущее состояние после DELETE
+```sql
+SELECT count(*) AS rows, count_if(nation_name = 'RUSSIA') AS russia FROM lakekeeper.silver.customer
+```
+| rows | russia |
+|---|---|
+| 1439935 | 0 |
+
+### 4. Time travel: читаем снапшот до аварии (1472664706081604478)
+```sql
+SELECT count(*) AS rows, count_if(nation_name = 'RUSSIA') AS russia FROM lakekeeper.silver.customer FOR VERSION AS OF 1472664706081604478
+```
+| rows | russia |
+|---|---|
+| 1500000 | 60065 |
+
+### 5. Восстановление: откат таблицы к снапшоту до аварии
+```sql
+ALTER TABLE lakekeeper.silver.customer EXECUTE rollback_to_snapshot(1472664706081604478)
+```
+
+### После отката
+```sql
+SELECT count(*) AS rows, count_if(nation_name = 'RUSSIA') AS russia FROM lakekeeper.silver.customer
+```
+| rows | russia |
+|---|---|
+| 1500000 | 60065 |
+
+### 6. Возвращаем имя phone (Gold-скрипты ссылаются на него); customer_tier оставляем как обогащение
+```sql
+ALTER TABLE lakekeeper.silver.customer RENAME COLUMN phone_number TO phone
+```
+
+### Итоговая схема
+```sql
+SELECT column_name, data_type FROM lakekeeper.information_schema.columns WHERE table_schema = 'silver' AND table_name = 'customer' ORDER BY ordinal_position
+```
+| column_name | data_type |
+|---|---|
+| custkey | bigint |
+| name | varchar |
+| address | varchar |
+| phone | varchar |
+| acctbal | decimal(12,2) |
+| mktsegment | varchar |
+| comment | varchar |
+| nationkey | bigint |
+| nation_name | varchar |
+| region_name | varchar |
+| customer_tier | varchar |
+
+### Итоговая история снапшотов
+```sql
+SELECT snapshot_id, committed_at, operation FROM lakekeeper.silver."customer$snapshots" ORDER BY committed_at
+```
+| snapshot_id | committed_at | operation |
+|---|---|---|
+| 2896680048948188630 | 2026-10-12 09:16:32.238 UTC | append |
+| 1472664706081604478 | 2026-10-12 09:16:36.199 UTC | overwrite |
+| 2117779243010042359 | 2026-10-12 09:16:37.054 UTC | delete |

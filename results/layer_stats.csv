@@ -1,0 +1,10 @@
+layer,table,rows,size_mb,files,columns,format,partitioning
+bronze,customer,1500000,81.77,3,10,PARQUET,нет
+bronze,lineitem,59986052,1567.97,8,18,PARQUET,нет
+bronze,nation,25,0.0,1,6,PARQUET,нет
+bronze,orders,15000000,387.48,8,11,PARQUET,нет
+bronze,region,5,0.0,1,5,PARQUET,нет
+silver,customer,1500000,86.38,1,11,PARQUET,нет
+silver,order_lines,59986052,1394.53,80,20,PARQUET,month(orderdate)
+gold,q10_returned_items_top20,20,0.0,1,10,PARQUET,нет
+gold,returns_by_nation_quarter,675,0.01,1,9,PARQUET,нет

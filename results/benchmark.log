@@ -1,0 +1,87 @@
+baseline (blackhole):
+  baseline nation: [62, 25] ms
+  baseline region: [28, 26] ms
+  baseline customer: [407, 326] ms
+  baseline orders: [2432, 2154] ms
+  baseline lineitem: [8725, 9252] ms
+== PARQUET / NONE  (+0.4 min)
+  PARQUET/NONE nation: write [174, 132] ms, 0.0 MB in 1 files
+  PARQUET/NONE region: write [127, 127] ms, 0.0 MB in 1 files
+  PARQUET/NONE customer: write [2256, 2088] ms, 245.3 MB in 3 files
+  PARQUET/NONE orders: write [15868, 21090] ms, 1208.2 MB in 8 files
+  PARQUET/NONE lineitem: write [59092, 55861] ms, 3831.2 MB in 8 files
+  PARQUET/NONE q10: median 8191 ms  [8191, 7842, 36949, 7865, 34136]
+  PARQUET/NONE scan_agg: median 3661 ms  [3661, 30644, 4239, 3157, 3274]
+  PARQUET/NONE narrow_sum: median 2335 ms  [2361, 2205, 2188, 2335, 2442]
+== PARQUET / SNAPPY  (+5.9 min)
+  PARQUET/SNAPPY nation: write [341, 246] ms, 0.0 MB in 1 files
+  PARQUET/SNAPPY region: write [130, 142] ms, 0.0 MB in 1 files
+  PARQUET/SNAPPY customer: write [3764, 2776] ms, 123.9 MB in 3 files
+  PARQUET/SNAPPY orders: write [6452, 7682] ms, 576.2 MB in 8 files
+  PARQUET/SNAPPY lineitem: write [32102, 38923] ms, 2100.3 MB in 8 files
+  PARQUET/SNAPPY q10: median 5856 ms  [7002, 6669, 5362, 4071, 5856]
+  PARQUET/SNAPPY scan_agg: median 3436 ms  [3627, 3046, 1570, 3436, 3592]
+  PARQUET/SNAPPY narrow_sum: median 2913 ms  [3069, 4913, 2913, 1491, 2142]
+== PARQUET / LZ4  (+8.6 min)
+  PARQUET/LZ4: ERROR NOT_SUPPORTED: Compression codec LZ4 not supported for Parquet
+== PARQUET / ZSTD  (+8.6 min)
+  PARQUET/ZSTD nation: write [324, 142] ms, 0.0 MB in 1 files
+  PARQUET/ZSTD region: write [110, 121] ms, 0.0 MB in 1 files
+  PARQUET/ZSTD customer: write [3151, 2511] ms, 81.8 MB in 3 files
+  PARQUET/ZSTD orders: write [9298, 9018] ms, 387.4 MB in 8 files
+  PARQUET/ZSTD lineitem: write [55957, 60972] ms, 1568.0 MB in 8 files
+  PARQUET/ZSTD q10: median 5764 ms  [6893, 5901, 5524, 5701, 5764]
+  PARQUET/ZSTD scan_agg: median 4118 ms  [3824, 4846, 4283, 4118, 3300]
+  PARQUET/ZSTD narrow_sum: median 2469 ms  [2113, 2471, 2569, 2469, 1754]
+== PARQUET / GZIP  (+12.2 min)
+  PARQUET/GZIP nation: write [258, 160] ms, 0.0 MB in 1 files
+  PARQUET/GZIP region: write [345, 145] ms, 0.0 MB in 1 files
+  PARQUET/GZIP customer: write [7985, 8754] ms, 80.4 MB in 3 files
+  PARQUET/GZIP orders: write [28029, 22994] ms, 373.5 MB in 8 files
+  PARQUET/GZIP lineitem: write [94867, 74244] ms, 1534.7 MB in 8 files
+  PARQUET/GZIP q10: median 5447 ms  [6134, 5447, 6195, 4626, 3773]
+  PARQUET/GZIP scan_agg: median 3191 ms  [2438, 3191, 3044, 3552, 3284]
+  PARQUET/GZIP narrow_sum: median 1691 ms  [1897, 1691, 1362, 1080, 3317]
+== ORC / NONE  (+17.3 min)
+  ORC/NONE nation: write [288, 173] ms, 0.0 MB in 1 files
+  ORC/NONE region: write [160, 164] ms, 0.0 MB in 1 files
+  ORC/NONE customer: write [2942, 4065] ms, 225.1 MB in 3 files
+  ORC/NONE orders: write [16695, 27855] ms, 1108.5 MB in 8 files
+  ORC/NONE lineitem: write [74805, 161095] ms, 4967.6 MB in 8 files
+  ORC/NONE q10: median 13092 ms  [37597, 10717, 13092, 38836, 12888]
+  ORC/NONE scan_agg: median 13662 ms  [15867, 11563, 13862, 10041, 13662]
+  ORC/NONE narrow_sum: median 3629 ms  [3331, 3979, 3702, 3629, 3525]
+== ORC / SNAPPY  (+25.8 min)
+  ORC/SNAPPY nation: write [602, 330] ms, 0.0 MB in 1 files
+  ORC/SNAPPY region: write [522, 217] ms, 0.0 MB in 1 files
+== ORC / SNAPPY  (+0.0 min)
+  ORC/SNAPPY nation: write [228] ms, 0.0 MB in 1 files
+  ORC/SNAPPY region: write [190] ms, 0.0 MB in 1 files
+  ORC/SNAPPY customer: write [4427] ms, 112.1 MB in 3 files
+  ORC/SNAPPY orders: write [15128] ms, 484.5 MB in 8 files
+  ORC/SNAPPY lineitem: write [203431] ms, 2294.0 MB in 8 files
+  ORC/SNAPPY q10: median 13138 ms  [21542, 13138, 9461]
+  ORC/SNAPPY scan_agg: median 10725 ms  [9190, 12990, 10725]
+  ORC/SNAPPY narrow_sum: median 2901 ms  [2901, 2591, 3313]
+== ORC / LZ4  (+5.6 min)
+  ORC/LZ4 nation: write [409] ms, 0.0 MB in 1 files
+  ORC/LZ4 region: write [179] ms, 0.0 MB in 1 files
+== ORC / ZSTD  (+0.0 min)
+  ORC/ZSTD nation: write [402] ms, 0.0 MB in 1 files
+  ORC/ZSTD region: write [512] ms, 0.0 MB in 1 files
+  ORC/ZSTD customer: write [4794] ms, 74.9 MB in 3 files
+  ORC/ZSTD orders: write [14774] ms, 352.7 MB in 8 files
+  ORC/ZSTD lineitem: write [113075] ms, 1664.2 MB in 8 files
+  ORC/ZSTD q10: median 8018 ms  [9450, 8018, 6147]
+  ORC/ZSTD scan_agg: median 5868 ms  [5868, 5084, 7702]
+  ORC/ZSTD narrow_sum: median 3100 ms  [3100, 3217, 1969]
+== AVRO / ZSTD  (+3.4 min)
+  AVRO/ZSTD nation: write [448] ms, 0.0 MB in 1 files
+  AVRO/ZSTD region: write [140] ms, 0.0 MB in 1 files
+  AVRO/ZSTD customer: write [6229] ms, 111.6 MB in 3 files
+  AVRO/ZSTD orders: write [37039] ms, 652.6 MB in 8 files
+  AVRO/ZSTD lineitem: write [106457] ms, 3132.8 MB in 8 files
+  AVRO/ZSTD q10: median 43287 ms  [43287, 54379, 39913]
+  AVRO/ZSTD scan_agg: median 19428 ms  [14400, 27950, 19428]
+  AVRO/ZSTD narrow_sum: median 8797 ms  [10528, 8797, 7356]
+done in 11.2 min
