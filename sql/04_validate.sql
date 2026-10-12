@@ -3,14 +3,15 @@
 -- =====================================================================
 
 -- 1. Silver.order_lines: нет дублей по ключу (orderkey, linenumber) и пустых ключей
--- (группируем по orderkey: 15 млн групп влезают в память, 60 млн составных ключей — нет)
+-- (группируем по orderkey: 15 млн групп влезают в память, 60 млн составных ключей — нет;
+--  различные linenumber (1..7) считаем битовой маской — компактнее, чем count(DISTINCT))
 SELECT sum(lines)                    AS rows_total,
        sum(lines - distinct_lines)   AS duplicates,
        sum(null_keys)                AS null_keys
 FROM (
     SELECT orderkey,
            count(*)                                       AS lines,
-           count(DISTINCT linenumber)                     AS distinct_lines,
+           bit_count(bitwise_or_agg(bitwise_left_shift(1, linenumber)), 64) AS distinct_lines,
            count_if(custkey IS NULL OR orderdate IS NULL) AS null_keys
     FROM lakekeeper.silver.order_lines
     GROUP BY orderkey
