@@ -85,7 +85,6 @@ Superset, подключённый к Bronze через Trino — `scripts/super
 | `scripts/evolution_timetravel.py` | schema evolution и time travel на Silver |
 | `scripts/layer_stats.py` · `scripts/charts.py` | статистика слоёв, сводные таблицы и графики |
 | `scripts/superset.sh`, `superset/` | развёртывание Superset с драйвером Trino |
-| `scripts/mc.sh` | MinIO-клиент в контейнере (просмотр бакета) |
 | `results/` | сырые замеры (CSV) и логи прогонов |
 | `img/` | графики бенчмарка и скриншот Superset |
 
