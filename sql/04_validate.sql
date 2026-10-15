@@ -23,13 +23,23 @@ FROM lakekeeper.silver.order_lines ol
 LEFT JOIN lakekeeper.silver.customer c ON c.custkey = ol.custkey
 WHERE c.custkey IS NULL;
 
--- 3. Gold vs эталон: исходный Q10 из варианта, выполненный прямо по генератору tpch.sf10.
---    Сравниваем порядок клиентов и выручку (эталон считает в double, Gold — в decimal,
---    поэтому допускаем расхождение < 0.01).
+-- 3. Gold vs эталон: запрос варианта 2 ДОСЛОВНО (заменён только sf1 → sf10, как требует вариант),
+--    выполненный прямо по генератору tpch.sf10. Сравниваем все 8 колонок вывода построчно по месту в топе.
+--    Эталон считает деньги в double, Gold — в decimal, поэтому revenue/acctbal сравниваем с допуском 0.01.
+--    Silver делает trim() строк, а у части клиентов TPC-H comment/address начинается или кончается пробелом,
+--    поэтому строки сравниваем дважды: побайтно и после trim эталона (разница только в крайних пробелах).
 WITH ref AS (
-    SELECT row_number() OVER (ORDER BY revenue DESC, custkey) AS rank, custkey, revenue
+    SELECT row_number() OVER (ORDER BY revenue DESC) AS rank, *
     FROM (
-        SELECT c.custkey, sum(l.extendedprice * (1 - l.discount)) AS revenue
+        SELECT
+          c.custkey,
+          c.name,
+          sum(l.extendedprice * (1 - l.discount)) AS revenue,
+          c.acctbal,
+          n.name AS nation,
+          c.address,
+          c.phone,
+          c.comment
         FROM tpch.sf10.customer AS c
         JOIN tpch.sf10.orders   AS o ON c.custkey = o.custkey
         JOIN tpch.sf10.lineitem AS l ON l.orderkey = o.orderkey
@@ -42,8 +52,14 @@ WITH ref AS (
         LIMIT 20
     )
 )
-SELECT count(*)                                                    AS compared_rows,
-       count_if(g.custkey = ref.custkey)                           AS same_customer_at_rank,
-       max(abs(CAST(g.revenue AS double) - ref.revenue))           AS max_revenue_diff
+SELECT count(*)                                                          AS compared_rows,
+       count_if(g.custkey = ref.custkey AND g.nation = ref.nation AND g.phone = ref.phone
+                AND abs(CAST(g.acctbal AS double) - ref.acctbal) < 0.01
+                AND abs(CAST(g.revenue AS double) - ref.revenue) < 0.01) AS same_customer_revenue,
+       count_if(g.name = ref.name AND g.address = ref.address
+                AND g.comment = ref.comment)                             AS text_byte_equal,
+       count_if(g.name = trim(ref.name) AND g.address = trim(ref.address)
+                AND g.comment = trim(ref.comment))                       AS text_equal_after_trim,
+       max(abs(CAST(g.revenue AS double) - ref.revenue))                 AS max_revenue_diff
 FROM lakekeeper.gold.q10_returned_items_top20 g
 JOIN ref ON ref.rank = g.rank;

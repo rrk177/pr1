@@ -1,12 +1,12 @@
-[   8.34s] SELECT sum(lines)                    AS rows_total,
+[   2.58s] SELECT sum(lines)                    AS rows_total,
 rows_total | duplicates | null_keys
 -----------+------------+----------
 59986052   | 0          | 0        
-[   2.82s] SELECT count(*) AS orphan_lines
+[   1.62s] SELECT count(*) AS orphan_lines
 orphan_lines
 ------------
 0           
-[  33.32s] WITH ref AS (
-compared_rows | same_customer_at_rank | max_revenue_diff      
---------------+-----------------------+-----------------------
-20            | 20                    | 2.3283064365386963e-10
+[   8.49s] WITH ref AS (
+compared_rows | same_customer_revenue | text_byte_equal | text_equal_after_trim | max_revenue_diff      
+--------------+-----------------------+-----------------+-----------------------+-----------------------
+20            | 20                    | 16              | 20                    | 2.3283064365386963e-10
